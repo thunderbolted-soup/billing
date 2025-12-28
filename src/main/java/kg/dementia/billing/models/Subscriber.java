@@ -27,6 +27,6 @@ public class Subscriber {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tariff_id")
-    @ToString.Exclude // Сделано чтоб лишний раз бд не дергать
+    @ToString.Exclude // Исключаем из toString, чтобы хибер не лез в базу лишний раз (N+1) и не падал на ленивой загрузке
     private Tariff tariff;
 }

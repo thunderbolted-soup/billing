@@ -15,7 +15,7 @@ public class SubscriberService {
     private final SubscriberRepository subscriberRepository;
 
     public Subscriber create(Subscriber subscriber) {
-        // Бизнес-логика: установка значений по умолчанию
+        // Проставляем дефолтные значения, если не пришли
         if (subscriber.getBalance() == null) {
             subscriber.setBalance(BigDecimal.ZERO);
         }

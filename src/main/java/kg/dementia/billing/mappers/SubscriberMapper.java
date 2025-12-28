@@ -19,10 +19,9 @@ public class SubscriberMapper {
         subscriber.setPhoneNumber(dto.phoneNumber());
         subscriber.setBalance(dto.balance());
         subscriber.setActive(dto.isActive());
-        
-        // Магия JPA: если нам прислали ID тарифа, мы получаем ссылку на него
-        // getReferenceById не делает запрос в БД, а создает "прокси" (пустышку с ID)
-        // Это идеально для сохранения связей.
+
+        // Фишка hibernate: если нам нужен только ID тарифа для связи, юзаем getReferenceById.
+        // Это создаст прокси (пустышку), и мы сэкономим на лишнем селекте в базу.
         if (dto.tariffId() != null) {
             Tariff tariffRef = tariffRepository.getReferenceById(dto.tariffId());
             subscriber.setTariff(tariffRef);
@@ -43,7 +42,6 @@ public class SubscriberMapper {
                 entity.getBalance(),
                 entity.isActive(),
                 tariffId,
-                entity.getCreatedAt()
-        );
+                entity.getCreatedAt());
     }
 }

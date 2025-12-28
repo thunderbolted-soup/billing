@@ -28,13 +28,10 @@ public class BillingController {
 
     @PostMapping("/tariffs")
     public TariffDto createTariff(@RequestBody @Valid TariffDto tariffDto) {
-        // 1. Превращаем DTO в Сущность
+
         Tariff entity = tariffMapper.toEntity(tariffDto);
-        
-        // 2. Отдаем сервису на сохранение
         Tariff createdEntity = tariffService.create(entity);
-        
-        // 3. Превращаем сохраненную сущность обратно в DTO
+
         return tariffMapper.toDto(createdEntity);
     }
 

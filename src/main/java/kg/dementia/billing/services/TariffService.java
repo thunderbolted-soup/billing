@@ -16,8 +16,7 @@ public class TariffService {
     public Tariff create(Tariff tariff) {
         return tariffRepository.save(tariff);
     }
-    
-    // Добавим метод получения всех тарифов, пригодится для фронта или тестов
+
     public List<Tariff> findAll() {
         return tariffRepository.findAll();
     }
