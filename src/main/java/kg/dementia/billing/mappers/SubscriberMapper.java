@@ -4,6 +4,7 @@ import kg.dementia.billing.dto.SubscriberDto;
 import kg.dementia.billing.models.Subscriber;
 import kg.dementia.billing.models.Tariff;
 import kg.dementia.billing.repository.TariffRepository;
+import kg.dementia.billing.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,10 +21,12 @@ public class SubscriberMapper {
         subscriber.setBalance(dto.balance());
         subscriber.setActive(dto.isActive());
 
-        // Фишка hibernate: если нам нужен только ID тарифа для связи, юзаем getReferenceById.
-        // Это создаст прокси (пустышку), и мы сэкономим на лишнем селекте в базу.
+        // Фишка hibernate: если нам нужен только ID тарифа для связи, юзаем
+        // getReferenceById.
+        // ЭТО ПЛОХО: Если ID неверный, упадет 500. Лучше проверить существование.
         if (dto.tariffId() != null) {
-            Tariff tariffRef = tariffRepository.getReferenceById(dto.tariffId());
+            Tariff tariffRef = tariffRepository.findById(dto.tariffId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Tariff not found with id: " + dto.tariffId()));
             subscriber.setTariff(tariffRef);
         }
 

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
+import kg.dementia.billing.dto.TariffAnalyticsDto;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -17,7 +17,7 @@ public class ReportController {
     private final ReportRepository reportRepository;
 
     @GetMapping("/tariffs")
-    public List<Map<String, Object>> getTariffStats() {
+    public List<TariffAnalyticsDto> getTariffStats() {
         return reportRepository.getTariffAnalytics();
     }
 }

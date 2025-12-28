@@ -4,13 +4,14 @@ import kg.dementia.billing.models.Subscriber;
 import kg.dementia.billing.repository.SubscriberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import org.springframework.core.task.TaskExecutor;
 
 @Service
 @RequiredArgsConstructor
@@ -18,59 +19,60 @@ import java.util.concurrent.TimeUnit;
 public class BillingCycleService {
 
     private final SubscriberRepository subscriberRepository;
-    // Пул потоков, чтобы обрабатывать абонентов параллельно, а не по очереди
-    private final ExecutorService executorService = Executors.newFixedThreadPool(5);
+    private final TransactionTemplate transactionTemplate;
+    private final TaskExecutor taskExecutor;
 
     public void runBillingCycle() {
         log.info("Starting billing cycle...");
-        List<Subscriber> subscribers = subscriberRepository.findAll();
 
-        for (Subscriber subscriber : subscribers) {
-            executorService.submit(() -> processSubscriber(subscriber));
-        }
+        int pageNumber = 0;
+        int pageSize = 100;
+        Page<Subscriber> page;
+
+        do {
+            page = subscriberRepository.findAll(PageRequest.of(pageNumber, pageSize));
+            List<Subscriber> subscribers = page.getContent();
+
+            for (Subscriber subscriber : subscribers) {
+                taskExecutor.execute(() -> processSubscriber(subscriber));
+            }
+
+            pageNumber++;
+        } while (page.hasNext());
     }
 
     private void processSubscriber(Subscriber subscriber) {
         try {
-            log.info("Processing subscriber {} on thread {}", subscriber.getId(), Thread.currentThread().getName());
+            // Оборачиваем в транзакцию программно, так как @Transactional не работает при
+            // вызове внутри класса (self-invocation)
+            // и при вызове из другого потока контекст транзакции теряется.
+            transactionTemplate.executeWithoutResult(status -> {
+                log.info("Processing subscriber {} on thread {}", subscriber.getId(), Thread.currentThread().getName());
 
-            // Имитация тяжелых вычислений
-            Thread.sleep(1000);
+                // Имитация тяжелых вычислений (убрали Thread.sleep для продакшена)
+                // Thread.sleep(1000);
 
-            if (subscriber.isActive()) {
+                if (subscriber.isActive()) {
+                    // Используем цену из тарифа вместо хардкода
+                    BigDecimal monthlyFee = subscriber.getTariff().getPrice();
 
-                // TODO: Тут надо прикрутить нормальный расчет по тарифу, пока хардкод 100 сом
-                BigDecimal monthlyFee = new BigDecimal("100.00");
-
-                if (subscriber.getBalance().compareTo(monthlyFee) >= 0) {
-                    subscriber.setBalance(subscriber.getBalance().subtract(monthlyFee));
-                    subscriberRepository.save(subscriber);
-                    log.info("Charged subscriber {}. New balance: {}", subscriber.getId(), subscriber.getBalance());
+                    if (subscriber.getBalance().compareTo(monthlyFee) >= 0) {
+                        subscriberRepository.charge(subscriber.getId(), monthlyFee);
+                        log.info("Charged subscriber {}. Amount: {}", subscriber.getId(), monthlyFee);
+                    } else {
+                        log.warn("Subscriber {} has insufficient funds. Blocking...", subscriber.getId());
+                        subscriber.setActive(false);
+                        subscriberRepository.save(subscriber);
+                    }
                 } else {
-                    log.warn("Subscriber {} has insufficient funds. Blocking...", subscriber.getId());
-                    subscriber.setActive(false);
-                    subscriberRepository.save(subscriber);
+                    log.info("Subscriber {} is already inactive. Skipping.", subscriber.getId());
                 }
-            } else {
-                log.info("Subscriber {} is already inactive. Skipping.", subscriber.getId());
-            }
+            });
 
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("Billing interrupted for subscriber {}", subscriber.getId(), e);
         } catch (Exception e) {
             log.error("Error processing subscriber {}", subscriber.getId(), e);
         }
     }
 
-    public void shutdown() {
-        executorService.shutdown();
-        try {
-            if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
-                executorService.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            executorService.shutdownNow();
-        }
-    }
+    // Shutdown handled by Spring
 }

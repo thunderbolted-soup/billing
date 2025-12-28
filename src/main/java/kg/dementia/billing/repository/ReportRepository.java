@@ -5,7 +5,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Map;
+import kg.dementia.billing.dto.TariffAnalyticsDto;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 
 @Repository
 @RequiredArgsConstructor
@@ -15,9 +16,10 @@ public class ReportRepository {
 
     /*
      * Тут юзаю нативный sql через JdbcTemplate.
-     * Для сложной аналитики с группировками оно удобнее и быстрее, чем мучиться с JPQL или Criteria API.
+     * Для сложной аналитики с группировками оно удобнее и быстрее, чем мучиться с
+     * JPQL или Criteria API.
      */
-    public List<Map<String, Object>> getTariffAnalytics() {
+    public List<TariffAnalyticsDto> getTariffAnalytics() {
         String sql = """
                     SELECT
                         t.name AS tariff_name,
@@ -31,6 +33,6 @@ public class ReportRepository {
                     ORDER BY total_subscribers DESC
                 """;
 
-        return jdbcTemplate.queryForList(sql);
+        return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(TariffAnalyticsDto.class));
     }
 }
