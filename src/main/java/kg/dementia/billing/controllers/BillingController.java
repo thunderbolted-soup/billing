@@ -1,5 +1,6 @@
 package kg.dementia.billing.controllers;
 
+import jakarta.validation.Valid;
 import kg.dementia.billing.dto.SubscriberDto;
 import kg.dementia.billing.dto.TariffDto;
 import kg.dementia.billing.mappers.SubscriberMapper;
@@ -26,7 +27,7 @@ public class BillingController {
     private final SubscriberMapper subscriberMapper;
 
     @PostMapping("/tariffs")
-    public TariffDto createTariff(@RequestBody TariffDto tariffDto) {
+    public TariffDto createTariff(@RequestBody @Valid TariffDto tariffDto) {
         // 1. Превращаем DTO в Сущность
         Tariff entity = tariffMapper.toEntity(tariffDto);
         
@@ -38,7 +39,7 @@ public class BillingController {
     }
 
     @PostMapping("/subscribers")
-    public SubscriberDto createSubscriber(@RequestBody SubscriberDto subscriberDto) {
+    public SubscriberDto createSubscriber(@RequestBody @Valid SubscriberDto subscriberDto) {
         Subscriber entity = subscriberMapper.toEntity(subscriberDto);
         Subscriber createdEntity = subscriberService.create(entity);
         return subscriberMapper.toDto(createdEntity);
