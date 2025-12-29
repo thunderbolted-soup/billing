@@ -6,8 +6,8 @@
 ## 🛠 Стек технологий
 
 * **Java 21**
-* **Spring Boot 3.x** (Web, Data JPA, Validation)
-* **PostgreSQL 15**
+* **Spring Boot** (Web, Data JPA, Validation)
+* **PostgreSQL**
 * **Docker & Docker Compose**
 * **Maven** (Layered Jar build)
 
