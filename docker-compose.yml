@@ -22,6 +22,8 @@ services:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - billing-net
+    ports:
+      - "5432:5432"
 
 networks:
   billing-net:
