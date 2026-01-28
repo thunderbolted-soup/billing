@@ -11,6 +11,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.springframework.core.task.TaskExecutor;
 
 @Service
@@ -30,12 +31,16 @@ public class BillingCycleService {
         Page<Subscriber> page;
 
         do {
-            page = subscriberRepository.findAll(PageRequest.of(pageNumber, pageSize));
+            page = subscriberRepository.findAllWithTariff(PageRequest.of(pageNumber, pageSize));
             List<Subscriber> subscribers = page.getContent();
 
-            for (Subscriber subscriber : subscribers) {
-                taskExecutor.execute(() -> processSubscriber(subscriber));
-            }
+            List<CompletableFuture<Void>> futures = subscribers.stream()
+                    .map(subscriber -> CompletableFuture.runAsync(() -> processSubscriber(subscriber), taskExecutor))
+                    .toList();
+
+            // Wait for all tasks in this page to complete before processing the next page
+            // This prevents flooding the task executor with thousands of tasks
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
             pageNumber++;
         } while (page.hasNext());
@@ -48,9 +53,6 @@ public class BillingCycleService {
             // и при вызове из другого потока контекст транзакции теряется.
             transactionTemplate.executeWithoutResult(status -> {
                 log.info("Processing subscriber {} on thread {}", subscriber.getId(), Thread.currentThread().getName());
-
-                // Имитация тяжелых вычислений (убрали Thread.sleep для продакшена)
-                // Thread.sleep(1000);
 
                 if (subscriber.isActive()) {
                     // Используем цену из тарифа вместо хардкода

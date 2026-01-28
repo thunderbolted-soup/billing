@@ -12,23 +12,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SubscriberMapper {
 
-    private final TariffRepository tariffRepository;
-
     public Subscriber toEntity(SubscriberDto dto) {
         Subscriber subscriber = new Subscriber();
         subscriber.setId(dto.id());
         subscriber.setPhoneNumber(dto.phoneNumber());
         subscriber.setBalance(dto.balance());
         subscriber.setActive(dto.isActive());
-
-        // Фишка hibernate: если нам нужен только ID тарифа для связи, юзаем
-        // getReferenceById.
-        // ЭТО ПЛОХО: Если ID неверный, упадет 500. Лучше проверить существование.
-        if (dto.tariffId() != null) {
-            Tariff tariffRef = tariffRepository.findById(dto.tariffId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Tariff not found with id: " + dto.tariffId()));
-            subscriber.setTariff(tariffRef);
-        }
 
         return subscriber;
     }

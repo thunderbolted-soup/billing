@@ -20,4 +20,9 @@ public class TariffService {
     public List<Tariff> findAll() {
         return tariffRepository.findAll();
     }
+
+    public Tariff findById(Long id) {
+        return tariffRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tariff not found with id: " + id));
+    }
 }

@@ -38,7 +38,7 @@ public class BillingController {
     @PostMapping("/subscribers")
     public SubscriberDto createSubscriber(@RequestBody @Valid SubscriberDto subscriberDto) {
         Subscriber entity = subscriberMapper.toEntity(subscriberDto);
-        Subscriber createdEntity = subscriberService.create(entity);
+        Subscriber createdEntity = subscriberService.create(entity, subscriberDto.tariffId());
         return subscriberMapper.toDto(createdEntity);
     }
 }
