@@ -1,6 +1,7 @@
 package kg.dementia.billing.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kg.dementia.billing.repository.ReportRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,8 @@ public class ReportController {
     private final ReportRepository reportRepository;
 
     @Operation(summary = "Get tariff statistics", description = "Retrieves analytics data for all tariffs")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved statistics")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @GetMapping("/tariffs")
     public List<TariffAnalyticsDto> getTariffStats() {
         return reportRepository.getTariffAnalytics();

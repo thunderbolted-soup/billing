@@ -1,6 +1,7 @@
 package kg.dementia.billing.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kg.dementia.billing.services.BillingCycleService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,8 @@ public class BillingCycleController {
     private final BillingCycleService billingCycleService;
 
     @Operation(summary = "Trigger billing cycle", description = "Manually triggers the billing cycle process")
+    @ApiResponse(responseCode = "200", description = "Billing cycle triggered successfully")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @PostMapping("/run-billing-cycle")
     public ResponseEntity<String> triggerBillingCycle() {
         billingCycleService.runBillingCycle();

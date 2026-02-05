@@ -32,6 +32,8 @@ public class BillingController {
 
     @Operation(summary = "Create a new tariff", description = "Creates a new tariff with the given details")
     @ApiResponse(responseCode = "200", description = "Tariff created successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input (e.g., missing price/period)")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @PostMapping("/tariffs")
     public TariffDto createTariff(@RequestBody @Valid TariffDto tariffDto) {
 
@@ -43,6 +45,10 @@ public class BillingController {
 
     @Operation(summary = "Create a new subscriber", description = "Registers a new subscriber and assigns a tariff")
     @ApiResponse(responseCode = "200", description = "Subscriber created successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid input or validations failed")
+    @ApiResponse(responseCode = "404", description = "Selected Tariff not found")
+    @ApiResponse(responseCode = "409", description = "Subscriber with this phone number already exists")
+    @ApiResponse(responseCode = "500", description = "Internal server error")
     @PostMapping("/subscribers")
     public SubscriberDto createSubscriber(@RequestBody @Valid SubscriberDto subscriberDto) {
         Subscriber entity = subscriberMapper.toEntity(subscriberDto);

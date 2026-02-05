@@ -32,4 +32,16 @@ public class GlobalExceptionHandler {
     public Map<String, String> handleResourceNotFound(ResourceNotFoundException ex) {
         return Map.of("error", ex.getMessage());
     }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(ResourceConflictException.class)
+    public Map<String, String> handleResourceConflict(ResourceConflictException ex) {
+        return Map.of("error", ex.getMessage());
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(Exception.class)
+    public Map<String, String> handleGlobalException(Exception ex) {
+        return Map.of("error", "An unexpected error occurred: " + ex.getMessage());
+    }
 }

@@ -1,5 +1,6 @@
 package kg.dementia.billing.services;
 
+import kg.dementia.billing.exception.ResourceNotFoundException;
 import kg.dementia.billing.models.Tariff;
 import kg.dementia.billing.repository.TariffRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,6 @@ public class TariffService {
 
     public Tariff findById(Long id) {
         return tariffRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tariff not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Tariff not found with id: " + id));
     }
 }
