@@ -40,6 +40,9 @@ class BillingCycleServiceTest {
     @Mock
     private RetryTemplate retryTemplate;
 
+    @Mock
+    private kg.dementia.billing.config.BillingConfig billingConfig;
+
     @InjectMocks
     private BillingCycleService billingCycleService;
 
@@ -65,6 +68,8 @@ class BillingCycleServiceTest {
             RetryContext context = mock(RetryContext.class);
             return retryCallback.doWithRetry(context);
         }).when(retryTemplate).execute(any(RetryCallback.class));
+
+        lenient().when(billingConfig.getBatchSize()).thenReturn(100);
     }
 
     @Test
@@ -81,12 +86,13 @@ class BillingCycleServiceTest {
 
         Page<Subscriber> page = new PageImpl<>(List.of(subscriber));
         when(subscriberRepository.findAllWithTariff(any(PageRequest.class))).thenReturn(page);
+        when(subscriberRepository.charge(eq(1L), any())).thenReturn(1);
 
         // Act
         billingCycleService.runBillingCycle();
 
         // Assert
-        verify(subscriberRepository).charge(1L, new BigDecimal("100.00"));
+        verify(subscriberRepository).charge(eq(1L), eq(new BigDecimal("100.00")));
         verify(subscriberRepository, never()).save(any());
     }
 
@@ -155,6 +161,13 @@ class BillingCycleServiceTest {
 
         // Second page has s2 and hasNext=false
         Page<Subscriber> page2 = new PageImpl<>(List.of(s2), PageRequest.of(1, 1), 2);
+
+        when(billingConfig.getBatchSize()).thenReturn(100); // Or whatever size
+        // We need to match the PageRequest. Since logic uses config.batchSize, we
+        // expect it to be used in PageRequest.
+        // But here we mocked find behavior.
+        // Let's just fix the mock returns for charge.
+        when(subscriberRepository.charge(anyLong(), any())).thenReturn(1);
 
         when(subscriberRepository.findAllWithTariff(PageRequest.of(0, 100))).thenReturn(page1);
         when(subscriberRepository.findAllWithTariff(PageRequest.of(1, 100))).thenReturn(page2);

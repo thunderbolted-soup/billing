@@ -1,5 +1,6 @@
 package kg.dementia.billing;
 
+import kg.dementia.billing.config.BillingConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -35,11 +36,11 @@ public class BillingApplication {
     }
 
     @Bean
-    public TaskExecutor taskExecutor() {
+    public TaskExecutor taskExecutor(BillingConfig config) {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(10);
-        executor.setThreadNamePrefix("Billing-");
+        executor.setCorePoolSize(config.getThreadPool().getCoreSize());
+        executor.setMaxPoolSize(config.getThreadPool().getMaxSize());
+        executor.setThreadNamePrefix(config.getThreadPool().getNamePrefix());
         executor.initialize();
         return executor;
     }

@@ -24,15 +24,19 @@ public class BillingCycleService {
     private final TransactionTemplate transactionTemplate;
     private final RetryTemplate retryTemplate;
     private final TaskExecutor taskExecutor;
+    private final kg.dementia.billing.config.BillingConfig billingConfig;
 
     public void runBillingCycle() {
         log.info("Starting billing cycle...");
 
         int pageNumber = 0;
-        int pageSize = 100;
+        int pageSize = billingConfig.getBatchSize();
         Page<Subscriber> page;
 
         do {
+            org.springframework.util.StopWatch stopWatch = new org.springframework.util.StopWatch();
+            stopWatch.start();
+
             page = subscriberRepository.findAllWithTariff(PageRequest.of(pageNumber, pageSize));
             List<Subscriber> subscribers = page.getContent();
 
@@ -44,8 +48,14 @@ public class BillingCycleService {
             // This prevents flooding the task executor with thousands of tasks
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
+            stopWatch.stop();
+            log.debug("Processed page {} with {} subscribers in {} ms", pageNumber, subscribers.size(),
+                    stopWatch.getTotalTimeMillis());
+
             pageNumber++;
         } while (page.hasNext());
+
+        log.info("Billing cycle finished.");
     }
 
     private void processSubscriber(Subscriber subscriber) {
@@ -55,7 +65,7 @@ public class BillingCycleService {
             // и при вызове из другого потока контекст транзакции теряется.
             retryTemplate.execute(retryContext -> {
                 transactionTemplate.executeWithoutResult(status -> {
-                    log.info("Processing subscriber {} on thread {} (attempt {})",
+                    log.debug("Processing subscriber {} on thread {} (attempt {})",
                             subscriber.getId(),
                             Thread.currentThread().getName(),
                             retryContext.getRetryCount() + 1);
@@ -64,16 +74,23 @@ public class BillingCycleService {
                         // Используем цену из тарифа вместо хардкода
                         BigDecimal monthlyFee = subscriber.getTariff().getPrice();
 
-                        if (subscriber.getBalance().compareTo(monthlyFee) >= 0) {
-                            subscriberRepository.charge(subscriber.getId(), monthlyFee);
+                        // Optimization: Preliminary check to avoid DB lock if obviously not enough
+                        if (subscriber.getBalance().compareTo(monthlyFee) < 0) {
+                            blockSubscriber(subscriber);
+                            return;
+                        }
+
+                        int updatedRows = subscriberRepository.charge(subscriber.getId(), monthlyFee);
+                        if (updatedRows > 0) {
                             log.info("Charged subscriber {}. Amount: {}", subscriber.getId(), monthlyFee);
                         } else {
-                            log.warn("Subscriber {} has insufficient funds. Blocking...", subscriber.getId());
-                            subscriber.setActive(false);
-                            subscriberRepository.save(subscriber);
+                            // Race condition happened or money gone between check and update
+                            log.warn("Subscriber {} has insufficient funds (race condition caught). Blocking...",
+                                    subscriber.getId());
+                            blockSubscriber(subscriber);
                         }
                     } else {
-                        log.info("Subscriber {} is already inactive. Skipping.", subscriber.getId());
+                        log.debug("Subscriber {} is already inactive. Skipping.", subscriber.getId());
                     }
                 });
                 return null;
@@ -84,5 +101,9 @@ public class BillingCycleService {
         }
     }
 
-    // Shutdown handled by Spring
+    private void blockSubscriber(Subscriber subscriber) {
+        subscriber.setActive(false);
+        subscriberRepository.save(subscriber);
+        log.info("Blocked subscriber {} due to insufficient funds", subscriber.getId());
+    }
 }

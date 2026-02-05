@@ -76,7 +76,70 @@ docker-compose up -d
 ## 📁 Структура проекта
 
 ```
-Soon...
+Directory structure:
+└── thunderbolted-soup-billing/
+    ├── README.md
+    ├── deploy.sh
+    ├── docker-compose.yml
+    ├── Dockerfile
+    ├── mvnw
+    ├── mvnw.cmd
+    ├── pom.xml
+    ├── src/
+    │   ├── main/
+    │   │   ├── java/
+    │   │   │   └── kg/
+    │   │   │       └── dementia/
+    │   │   │           └── billing/
+    │   │   │               ├── BillingApplication.java
+    │   │   │               ├── config/
+    │   │   │               │   └── OpenApiConfig.java
+    │   │   │               ├── controllers/
+    │   │   │               │   ├── BillingController.java
+    │   │   │               │   ├── BillingCycleController.java
+    │   │   │               │   └── ReportController.java
+    │   │   │               ├── dto/
+    │   │   │               │   ├── SubscriberDto.java
+    │   │   │               │   ├── TariffAnalyticsDto.java
+    │   │   │               │   └── TariffDto.java
+    │   │   │               ├── exception/
+    │   │   │               │   ├── GlobalExceptionHandler.java
+    │   │   │               │   ├── ResourceConflictException.java
+    │   │   │               │   └── ResourceNotFoundException.java
+    │   │   │               ├── mappers/
+    │   │   │               │   ├── SubscriberMapper.java
+    │   │   │               │   └── TariffMapper.java
+    │   │   │               ├── models/
+    │   │   │               │   ├── Subscriber.java
+    │   │   │               │   └── Tariff.java
+    │   │   │               ├── repository/
+    │   │   │               │   ├── ReportRepository.java
+    │   │   │               │   ├── SubscriberRepository.java
+    │   │   │               │   └── TariffRepository.java
+    │   │   │               └── services/
+    │   │   │                   ├── BillingCycleService.java
+    │   │   │                   ├── SubscriberService.java
+    │   │   │                   └── TariffService.java
+    │   │   └── resources/
+    │   │       └── application.properties
+    │   └── test/
+    │       ├── java/
+    │       │   └── kg/
+    │       │       └── dementia/
+    │       │           └── billing/
+    │       │               ├── AbstractIntegrationTest.java
+    │       │               ├── BillingApplicationTests.java
+    │       │               └── services/
+    │       │                   ├── BillingCycleServiceIT.java
+    │       │                   ├── BillingCycleServiceTest.java
+    │       │                   ├── SubscriberServiceTest.java
+    │       │                   └── TariffServiceTest.java
+    │       └── resources/
+    │           └── application.properties
+    └── .mvn/
+        └── wrapper/
+            └── maven-wrapper.properties
+
 ```
 
 ## Планы по доработке (To-Do)

@@ -13,8 +13,8 @@ import java.math.BigDecimal;
 public interface SubscriberRepository extends JpaRepository<Subscriber, Long> {
 
     @Modifying
-    @Query("UPDATE Subscriber s SET s.balance = s.balance - :amount WHERE s.id = :id")
-    void charge(@Param("id") Long id, @Param("amount") BigDecimal amount);
+    @Query("UPDATE Subscriber s SET s.balance = s.balance - :amount WHERE s.id = :id AND s.balance >= :amount")
+    int charge(@Param("id") Long id, @Param("amount") BigDecimal amount);
 
     boolean existsByPhoneNumber(String phoneNumber);
 
