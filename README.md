@@ -56,7 +56,7 @@
 * `GET /api/reports/tariffs` — Статистика по тарифам (доход, кол-во активных абонентов).
 
 ## Планы по доработке (To-Do)
-* [ ] Добавить Swagger (OpenAPI) для документации.
+* [x] Добавить Swagger (OpenAPI) для документации.
 * [ ] Реализовать механизм Retry для упавших транзакций.
 * [ ] Вынести биллинг-цикл в отдельный микросервис (Scheduled Job).
-* [ ] Покрыть тестами `BillingCycleService` (Testcontainers).
+* [x] Покрыть тестами `BillingCycleService` (Testcontainers).
