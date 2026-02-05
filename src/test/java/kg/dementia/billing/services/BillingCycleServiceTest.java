@@ -14,6 +14,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.retry.support.RetryTemplate;
+import org.springframework.retry.RetryCallback;
+import org.springframework.retry.RetryContext;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -34,6 +37,9 @@ class BillingCycleServiceTest {
     @Mock
     private TaskExecutor taskExecutor;
 
+    @Mock
+    private RetryTemplate retryTemplate;
+
     @InjectMocks
     private BillingCycleService billingCycleService;
 
@@ -52,6 +58,13 @@ class BillingCycleServiceTest {
             consumer.accept(null);
             return null;
         }).when(transactionTemplate).executeWithoutResult(any());
+
+        // Execute retry immediately
+        lenient().doAnswer(invocation -> {
+            RetryCallback retryCallback = invocation.getArgument(0);
+            RetryContext context = mock(RetryContext.class);
+            return retryCallback.doWithRetry(context);
+        }).when(retryTemplate).execute(any(RetryCallback.class));
     }
 
     @Test

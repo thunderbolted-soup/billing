@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.retry.support.RetryTemplate;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -21,6 +22,7 @@ public class BillingCycleService {
 
     private final SubscriberRepository subscriberRepository;
     private final TransactionTemplate transactionTemplate;
+    private final RetryTemplate retryTemplate;
     private final TaskExecutor taskExecutor;
 
     public void runBillingCycle() {
@@ -51,24 +53,30 @@ public class BillingCycleService {
             // Оборачиваем в транзакцию программно, так как @Transactional не работает при
             // вызове внутри класса (self-invocation)
             // и при вызове из другого потока контекст транзакции теряется.
-            transactionTemplate.executeWithoutResult(status -> {
-                log.info("Processing subscriber {} on thread {}", subscriber.getId(), Thread.currentThread().getName());
+            retryTemplate.execute(retryContext -> {
+                transactionTemplate.executeWithoutResult(status -> {
+                    log.info("Processing subscriber {} on thread {} (attempt {})",
+                            subscriber.getId(),
+                            Thread.currentThread().getName(),
+                            retryContext.getRetryCount() + 1);
 
-                if (subscriber.isActive()) {
-                    // Используем цену из тарифа вместо хардкода
-                    BigDecimal monthlyFee = subscriber.getTariff().getPrice();
+                    if (subscriber.isActive()) {
+                        // Используем цену из тарифа вместо хардкода
+                        BigDecimal monthlyFee = subscriber.getTariff().getPrice();
 
-                    if (subscriber.getBalance().compareTo(monthlyFee) >= 0) {
-                        subscriberRepository.charge(subscriber.getId(), monthlyFee);
-                        log.info("Charged subscriber {}. Amount: {}", subscriber.getId(), monthlyFee);
+                        if (subscriber.getBalance().compareTo(monthlyFee) >= 0) {
+                            subscriberRepository.charge(subscriber.getId(), monthlyFee);
+                            log.info("Charged subscriber {}. Amount: {}", subscriber.getId(), monthlyFee);
+                        } else {
+                            log.warn("Subscriber {} has insufficient funds. Blocking...", subscriber.getId());
+                            subscriber.setActive(false);
+                            subscriberRepository.save(subscriber);
+                        }
                     } else {
-                        log.warn("Subscriber {} has insufficient funds. Blocking...", subscriber.getId());
-                        subscriber.setActive(false);
-                        subscriberRepository.save(subscriber);
+                        log.info("Subscriber {} is already inactive. Skipping.", subscriber.getId());
                     }
-                } else {
-                    log.info("Subscriber {} is already inactive. Skipping.", subscriber.getId());
-                }
+                });
+                return null;
             });
 
         } catch (Exception e) {
