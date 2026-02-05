@@ -145,5 +145,5 @@ Directory structure:
 ## Планы по доработке (To-Do)
 * [x] Добавить Swagger (OpenAPI) для документации.
 * [x] Реализовать механизм Retry для упавших транзакций.
-* [ ] Вынести биллинг-цикл в отдельный микросервис (Scheduled Job).
+* [x] Вынести биллинг-цикл в отдельный микросервис (Scheduled Job).
 * [x] Покрыть тестами `BillingCycleService` (Testcontainers).

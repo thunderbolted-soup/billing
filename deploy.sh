@@ -11,6 +11,6 @@ docker compose build
 echo "🔥 Starting services..."
 docker compose up -d
 
-echo "✅ Deployment complete! App is running on http://localhost:8080"
-echo "📜 Logs:"
-docker compose logs -f app
+echo "✅ Deployment complete!"
+echo "📜 Logs (API):"
+docker compose logs -f billing-api

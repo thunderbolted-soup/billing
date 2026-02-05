@@ -1,6 +1,10 @@
 services:
-  app:
-    build: .
+  billing-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_NAME: billing-api
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/billing
       SPRING_DATASOURCE_USERNAME: postgres
@@ -8,6 +12,24 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
     ports:
       - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - billing-net
+
+  billing-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE_NAME: billing-worker
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/billing
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      BILLING_CYCLE_INTERVAL: 60000
+    ports:
+      - "8081:8081"
     depends_on:
       - db
     networks:
