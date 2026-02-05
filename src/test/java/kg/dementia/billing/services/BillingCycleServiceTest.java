@@ -16,7 +16,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -98,11 +97,9 @@ class BillingCycleServiceTest {
 
         // Assert
         verify(subscriberRepository, never()).charge(anyLong(), any());
-        
+
         // Subscriber should be updated to inactive
-        verify(subscriberRepository).save(argThat(s -> 
-            s.getId().equals(2L) && !s.isActive()
-        ));
+        verify(subscriberRepository).save(argThat(s -> s.getId().equals(2L) && !s.isActive()));
     }
 
     @Test
@@ -122,19 +119,27 @@ class BillingCycleServiceTest {
         verify(subscriberRepository, never()).charge(anyLong(), any());
         verify(subscriberRepository, never()).save(any());
     }
-    
+
     @Test
     void runBillingCycle_ShouldHandleMultiplePages() {
-         // Arrange
+        // Arrange
         Tariff tariff = new Tariff();
         tariff.setPrice(BigDecimal.TEN);
 
-        Subscriber s1 = new Subscriber(); s1.setId(1L); s1.setActive(true); s1.setBalance(BigDecimal.valueOf(100)); s1.setTariff(tariff);
-        Subscriber s2 = new Subscriber(); s2.setId(2L); s2.setActive(true); s2.setBalance(BigDecimal.valueOf(100)); s2.setTariff(tariff);
+        Subscriber s1 = new Subscriber();
+        s1.setId(1L);
+        s1.setActive(true);
+        s1.setBalance(BigDecimal.valueOf(100));
+        s1.setTariff(tariff);
+        Subscriber s2 = new Subscriber();
+        s2.setId(2L);
+        s2.setActive(true);
+        s2.setBalance(BigDecimal.valueOf(100));
+        s2.setTariff(tariff);
 
         // First page has s1 and hasNext=true
         Page<Subscriber> page1 = new PageImpl<>(List.of(s1), PageRequest.of(0, 1), 2);
-        
+
         // Second page has s2 and hasNext=false
         Page<Subscriber> page2 = new PageImpl<>(List.of(s2), PageRequest.of(1, 1), 2);
 

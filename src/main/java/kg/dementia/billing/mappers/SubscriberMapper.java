@@ -2,9 +2,6 @@ package kg.dementia.billing.mappers;
 
 import kg.dementia.billing.dto.SubscriberDto;
 import kg.dementia.billing.models.Subscriber;
-import kg.dementia.billing.models.Tariff;
-import kg.dementia.billing.repository.TariffRepository;
-import kg.dementia.billing.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
